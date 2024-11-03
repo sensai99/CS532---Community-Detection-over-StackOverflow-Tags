@@ -1,5 +1,6 @@
 from pyspark.sql import SparkSession
 from Dataset import Dataset
+from TextPreprocessor.py import TextPreprocessor
 
 def build_dataset():
     # Build the required dataframes (running locally)
@@ -20,8 +21,10 @@ def build_dataset():
     print('Number of tags in the raw dataset: ', tag_post_df.count())
     print('Number of posts in the raw dataset: ', post_text_df_raw.count())
 
-def preprocess_text():
-    return
+    return tag_post_df, post_text_df_raw
+
+def preprocess_text(post_text_df_raw):
+    return TextPreprocessor(post_text_df_raw).preprocess_text()
 
 def vectorize_text():
     return
@@ -33,10 +36,10 @@ if __name__ == "__main__":
     spark_session = SparkSession.builder.appName("532 Project").getOrCreate()
     
     # Build the dataest
-    build_dataset()
+    tag_post_df, post_text_df_raw = build_dataset()
 
-    # Preprocess the text data - (TODO: @durga)
-    preprocess_text()
+    # Preprocess the text data 
+    post_text_df = preprocess_text(post_text_df_raw)
 
     # Vectorize the text data - (TODO: @prathik)
     vectorize_text()
