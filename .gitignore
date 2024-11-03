@@ -1,0 +1,5 @@
+# Ignore macOS system files
+.DS_Store
+
+# Ignore python executables
+__pycache__/
