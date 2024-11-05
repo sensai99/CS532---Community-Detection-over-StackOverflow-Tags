@@ -42,7 +42,7 @@ if __name__ == "__main__":
     post_text_df = preprocess_text(post_text_df_raw)
 
     # Vectorize the text data - (TODO: @prathik)
-    vectorize_text()
+    vec_text_df = vectorize_text(post_text_df)
 
     # Compute the Cosine Similarity - (TODO: @abhinav)
     cosine_similarity()
