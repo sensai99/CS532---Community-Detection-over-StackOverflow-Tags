@@ -1,6 +1,7 @@
 from pyspark.sql import SparkSession
 from Dataset import Dataset
 from TextPreprocessor.py import TextPreprocessor
+import math
 
 def build_dataset():
     # Build the required dataframes (running locally)
@@ -29,8 +30,11 @@ def preprocess_text(post_text_df_raw):
 def vectorize_text():
     return
 
-def cosine_similarity():
-    return
+def cosine_similarity(x, y):
+    dot_product = sum(a * b for a, b in zip(x, y))
+    norm_x = math.sqrt(sum(a * a for a in x))
+    norm_y = math.sqrt(sum(b * b for b in y))
+    return dot_product / (norm_x * norm_y)
 
 if __name__ == "__main__":
     spark_session = SparkSession.builder.appName("532 Project").getOrCreate()
