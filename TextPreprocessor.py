@@ -17,7 +17,7 @@ from nltk.stem import PorterStemmer
 from nltk.stem import WordNetLemmatizer
 
 # Define a custom path for nltk_data
-nltk_data_dir = os.path.expanduser("/Users/durgapra/nltk_data")
+nltk_data_dir = os.path.expanduser("/Users/Dell/nltk_data")
 if not os.path.exists(nltk_data_dir):
     os.makedirs(nltk_data_dir)
 
@@ -53,7 +53,14 @@ class TextPreprocessor:
     # Remove HTML tags
     @staticmethod
     def remove_html_tags(text):
-        return BeautifulSoup(text, "html.parser").get_text()
+        filtered_html_text = ""
+        try:
+            filtered_html_text = BeautifulSoup(text, "html.parser").get_text()
+        except:
+            filtered_html_text = ""
+        return filtered_html_text
+    # def remove_html_tags(text):
+    #     return BeautifulSoup(text, "html.parser").get_text()
 
     @staticmethod
     def normalize_text(text):
