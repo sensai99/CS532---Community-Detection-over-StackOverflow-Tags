@@ -1,5 +1,5 @@
 from Dataset import Dataset
-from TextPreprocessor import TextPreprocessor
+from TextPreprocessor import TextPreprocessor, clean_text
 from pyspark.ml.feature import HashingTF, IDF
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import explode, split, collect_list, concat_ws, lit,trim, col,udf
@@ -71,15 +71,13 @@ def community_detection(spark_session,TFIDF_vectors_path,tag_count=2000):
     vertices,edges = get_graph_vertices_edges(TFIDF_vectors_path,tag_count)
     run_community_detection(spark_session.createDataFrame(vertices,["id"]),spark_session.createDataFrame(edges,["src", "dst", "weight"]))
 
-def inference_TFIDF(tag_name,vector_path):
+def inference_TFIDF(post,trained_vectorizer,vector_path):
+    query_vector = trained_vectorizer.transform([post]).toarray()[0]
     vector_map = np.load(vector_path)
-    with open('tag_name_id.json', "r") as file:
-        tag_id_map = json.load(file)
     with open('tag_id_name.json', "r") as file:
         tag_name_map = json.load(file)
    
-    id = tag_id_map[tag_name]
-    query_vector = vector_map[id].reshape(1, -1)
+    query_vector = query_vector.reshape(1, -1)
 
     similarities = {}
     for key, value in vector_map.items():
@@ -88,9 +86,7 @@ def inference_TFIDF(tag_name,vector_path):
 
     sorted_similarities = sorted(similarities.items(), key=lambda x: x[1], reverse=True)
 
-    for idx, (id, similarity) in enumerate(sorted_similarities[:20], start=1):
-        print(f"Rank {idx}: tag = {tag_name_map[id]}, Similarity = {similarity:.4f}")
-    return sorted_similarities
+    return [tag_name_map[id] for (id,similarity) in sorted_similarities[:20]]
 
 def prepare_TFIDF_vectors(spark_session,save_path,feature_size=1000):
  
@@ -162,6 +158,8 @@ def prepare_TFIDF_vectors(spark_session,save_path,feature_size=1000):
 
     np.savez(save_path, **tag_vector_map)
 
+    return vectorizer_body
+
 if __name__ == "__main__":
 
     spark_session = SparkSession.builder \
@@ -172,9 +170,11 @@ if __name__ == "__main__":
 
     vectors_save_path = 'vectors.npz'
     # Second parameter is the number of TF-IDF features
-    prepare_TFIDF_vectors(spark_session,vectors_save_path,1000)
+    trained_vectorizer = prepare_TFIDF_vectors(spark_session,vectors_save_path,1000)
     # sample inference - currently runs only for tags in training data
-    inference_TFIDF('github',vectors_save_path)
+    sample_post = clean_text("""Git - only push up the most recent commit to github,<p>On my local git repo I've got many commits which include 'secret' connection strings :-)</p> <p>I don't want this history on github when I push it there.</p> <p>Essentially I want to push everything I have but want to get rid of a whole lot of history.</p> <p>Perhaps I would be better running in a branch for all my dev then just merging back to master before committing... then the history for master will just be the commit I want.</p> <p>I've tried running rebase:</p> <pre>git rebase –i HEAD~3</pre> <p>That went back 3 commits and then I could delete a commit.</p> <p>However ran into auto cherry-pick failed and it got quite complex.</p> <p>Any thoughts greatly appreciated... no big deal to can the history and start again if this gets too hard :-)</p>""")
+    suggested_tags = inference_TFIDF(sample_post,trained_vectorizer,vectors_save_path)
+    print(suggested_tags)
     # Second parameter is the number of tags over which community detection is run.
     community_detection(spark_session,vectors_save_path,20)
 
