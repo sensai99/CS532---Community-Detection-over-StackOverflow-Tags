@@ -44,10 +44,10 @@ def preprocess_text(post_text_df_raw):
 def run_community_detection(vertices,edges):
     graph = GraphFrame(vertices, edges)
     result = graph.connectedComponents()
-    # result.show()
+    # result.show(20)
     print('Number of communities',result.select("component").distinct().count())
     result = graph.labelPropagation(maxIter=5)
-    # result.show()   
+    # result.show(20)   
     print('Number of communities', result.select("label").distinct().count())
 
 def get_graph_vertices_edges(TFIDF_vectors_path,tag_count):
@@ -65,11 +65,19 @@ def get_graph_vertices_edges(TFIDF_vectors_path,tag_count):
         for j in range(len(tag_ids)):
             edges.append((tag_ids[i],tag_ids[j],float(similarities[i][j])))
 
-    return vertices,edges
+    edges = list(filter(lambda x: x[2] >= 0.5,edges))
+    filtered_vertices = set([])
+    for edge in edges:
+        filtered_vertices.add(edge[0])
+        filtered_vertices.add(edge[1])
+
+    return [(tag_id,tag_name_map[tag_id]) for tag_id in filtered_vertices],edges
 
 def community_detection(spark_session,TFIDF_vectors_path,tag_count=2000):
     vertices,edges = get_graph_vertices_edges(TFIDF_vectors_path,tag_count)
-    run_community_detection(spark_session.createDataFrame(vertices,["id"]),spark_session.createDataFrame(edges,["src", "dst", "weight"]))
+    print(len(vertices))
+    print(len(edges))
+    run_community_detection(spark_session.createDataFrame(vertices,["id","name"]),spark_session.createDataFrame(edges,["src", "dst", "weight"]))
 
 def inference_TFIDF(post,trained_vectorizer,vector_path):
     query_vector = trained_vectorizer.transform([post]).toarray()[0]
@@ -169,13 +177,13 @@ if __name__ == "__main__":
     spark_session.sparkContext.setCheckpointDir("../spark-checkpoints")
 
     vectors_save_path = 'vectors.npz'
-    # Second parameter is the number of TF-IDF features
-    trained_vectorizer = prepare_TFIDF_vectors(spark_session,vectors_save_path,1000)
-    # sample inference - currently runs only for tags in training data
-    sample_post = clean_text("""Git - only push up the most recent commit to github,<p>On my local git repo I've got many commits which include 'secret' connection strings :-)</p> <p>I don't want this history on github when I push it there.</p> <p>Essentially I want to push everything I have but want to get rid of a whole lot of history.</p> <p>Perhaps I would be better running in a branch for all my dev then just merging back to master before committing... then the history for master will just be the commit I want.</p> <p>I've tried running rebase:</p> <pre>git rebase –i HEAD~3</pre> <p>That went back 3 commits and then I could delete a commit.</p> <p>However ran into auto cherry-pick failed and it got quite complex.</p> <p>Any thoughts greatly appreciated... no big deal to can the history and start again if this gets too hard :-)</p>""")
-    suggested_tags = inference_TFIDF(sample_post,trained_vectorizer,vectors_save_path)
-    print(suggested_tags)
+    # # Second parameter is the number of TF-IDF features
+    # trained_vectorizer = prepare_TFIDF_vectors(spark_session,vectors_save_path,1000)
+    # # sample inference - currently runs only for tags in training data
+    # sample_post = clean_text("""Git - only push up the most recent commit to github,<p>On my local git repo I've got many commits which include 'secret' connection strings :-)</p> <p>I don't want this history on github when I push it there.</p> <p>Essentially I want to push everything I have but want to get rid of a whole lot of history.</p> <p>Perhaps I would be better running in a branch for all my dev then just merging back to master before committing... then the history for master will just be the commit I want.</p> <p>I've tried running rebase:</p> <pre>git rebase –i HEAD~3</pre> <p>That went back 3 commits and then I could delete a commit.</p> <p>However ran into auto cherry-pick failed and it got quite complex.</p> <p>Any thoughts greatly appreciated... no big deal to can the history and start again if this gets too hard :-)</p>""")
+    # suggested_tags = inference_TFIDF(sample_post,trained_vectorizer,vectors_save_path)
+    # print(suggested_tags)
     # Second parameter is the number of tags over which community detection is run.
-    community_detection(spark_session,vectors_save_path,20)
+    community_detection(spark_session,vectors_save_path,200)
 
     spark_session.stop()
