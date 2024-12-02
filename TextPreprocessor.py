@@ -17,17 +17,17 @@ from nltk.stem import PorterStemmer
 from nltk.stem import WordNetLemmatizer
 
 # Define a custom path for nltk_data
-nltk_data_dir = os.path.expanduser("/Users/Dell/nltk_data")
-if not os.path.exists(nltk_data_dir):
-    os.makedirs(nltk_data_dir)
+# nltk_data_dir = os.path.expanduser("./nltk_data")
+# if not os.path.exists(nltk_data_dir):
+#     os.makedirs(nltk_data_dir)
 
-# Set NLTK data path
-nltk.data.path.append(nltk_data_dir)
+# # Set NLTK data path
+# nltk.data.path.append(nltk_data_dir)
 
-nltk.download('wordnet', download_dir = nltk_data_dir, quiet = True)
-nltk.download('stopwords', download_dir = nltk_data_dir, quiet = True)
-nltk.download('punkt', download_dir = nltk_data_dir, quiet = True)
-nltk.download('punkt_tab', download_dir = nltk_data_dir, quiet=True)
+# nltk.download('wordnet', download_dir = nltk_data_dir, quiet = True)
+# nltk.download('stopwords', download_dir = nltk_data_dir, quiet = True)
+# nltk.download('punkt', download_dir = nltk_data_dir, quiet = True)
+# nltk.download('punkt_tab', download_dir = nltk_data_dir, quiet=True)
 
 stop_words = set(stopwords.words('english'))
 

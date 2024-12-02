@@ -47,16 +47,16 @@ def run_community_detection(vertices,edges):
     # result.show(20)
     print('Number of communities',result.select("component").distinct().count())
     result = graph.labelPropagation(maxIter=5)
-    # result.show(20)   
+    # result.show(20)
     print('Number of communities', result.select("label").distinct().count())
 
 def get_graph_vertices_edges(TFIDF_vectors_path,tag_count):
     vectors = np.load(TFIDF_vectors_path)
-    with open('tag_id_name.json', "r") as file:
-        tag_name_map = json.load(file)
+    # with open('tag_id_name.json', "r") as file:
+    #     tag_name_map = json.load(file)
     tag_ids = list(vectors.keys())[:tag_count]
     tag_vectors = list(vectors.values())[:tag_count]
-    vertices = [(tag_id,tag_name_map[tag_id]) for tag_id in tag_ids]
+    vertices = [(tag_id,'a') for tag_id in tag_ids]
    
     similarities = cosine_similarity(tag_vectors,tag_vectors)
     edges = []
@@ -71,7 +71,7 @@ def get_graph_vertices_edges(TFIDF_vectors_path,tag_count):
         filtered_vertices.add(edge[0])
         filtered_vertices.add(edge[1])
 
-    return [(tag_id,tag_name_map[tag_id]) for tag_id in filtered_vertices],edges
+    return [(tag_id,'a') for tag_id in filtered_vertices],edges
 
 def community_detection(spark_session,TFIDF_vectors_path,tag_count=2000):
     vertices,edges = get_graph_vertices_edges(TFIDF_vectors_path,tag_count)
@@ -176,7 +176,18 @@ if __name__ == "__main__":
     .getOrCreate()
     spark_session.sparkContext.setCheckpointDir("../spark-checkpoints")
 
-    vectors_save_path = 'vectors.npz'
+    spark_conf = spark_session.sparkContext.getConf()
+
+    # Print all configurations
+    for item in spark_conf.getAll():
+        print(item)
+
+    print("spark.executor.memory:", spark_conf.get("spark.executor.memory", "default_value"))
+    print("spark.driver.memory:", spark_conf.get("spark.driver.memory", "default_value"))
+
+    exit()
+
+    vectors_save_path = 'datasets/vectors.npz'
     # # Second parameter is the number of TF-IDF features
     # trained_vectorizer = prepare_TFIDF_vectors(spark_session,vectors_save_path,1000)
     # # sample inference - currently runs only for tags in training data
@@ -184,6 +195,6 @@ if __name__ == "__main__":
     # suggested_tags = inference_TFIDF(sample_post,trained_vectorizer,vectors_save_path)
     # print(suggested_tags)
     # Second parameter is the number of tags over which community detection is run.
-    community_detection(spark_session,vectors_save_path,200)
+    community_detection(spark_session,vectors_save_path,3000)
 
     spark_session.stop()
