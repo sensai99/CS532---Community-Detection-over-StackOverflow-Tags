@@ -1,28 +1,18 @@
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import udf, col
 from pyspark.sql.types import StructType, StructField, StringType
-
 import os
-# This environment variable is only needed for macOS, not required for Dataproc clusters
-os.environ['OBJC_DISABLE_INITIALIZE_FORK_SAFETY'] = 'YES'
-
 import re
 import string
 from bs4 import BeautifulSoup
-
 import nltk
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 from nltk.stem import PorterStemmer
 from nltk.stem import WordNetLemmatizer
 
-# Define a custom path for nltk_data
-# nltk_data_dir = os.path.expanduser("./nltk_data")
-# if not os.path.exists(nltk_data_dir):
-#     os.makedirs(nltk_data_dir)
-
-# # Set NLTK data path
-# nltk.data.path.append(nltk_data_dir)
+# This environment variable is only needed for macOS, not required for Dataproc clusters
+os.environ['OBJC_DISABLE_INITIALIZE_FORK_SAFETY'] = 'YES'
 
 # nltk.download('wordnet', download_dir = nltk_data_dir, quiet = True)
 # nltk.download('stopwords', download_dir = nltk_data_dir, quiet = True)
@@ -59,8 +49,6 @@ class TextPreprocessor:
         except:
             filtered_html_text = ""
         return filtered_html_text
-    # def remove_html_tags(text):
-    #     return BeautifulSoup(text, "html.parser").get_text()
 
     @staticmethod
     def normalize_text(text):
