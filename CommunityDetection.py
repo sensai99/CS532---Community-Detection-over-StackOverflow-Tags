@@ -70,7 +70,7 @@ class CommunityDetection:
         search_space_df.show()
         suggested_tag_rows = search_space_df.head(10)
         
-        return [row["name"] for row in suggested_tag_rows]
+        return [row["name"] for row in suggested_tag_rows],[row["id"] for row in suggested_tag_rows]     
 
     def community_detection(self,tag_name,tag_count=20,similarity_threshold=0.5,training_iterations=5):
         tag_df = self.load_tag_data()
@@ -83,5 +83,5 @@ class CommunityDetection:
         graph = GraphFrame(vertices_df, edges_df)
         community_df,time_taken = self.perform_community_detection(graph,training_iterations)
 
-        suggested_tags = self.recommended_tags(tag_name,vertices_df,edges_df,community_df)
-        return suggested_tags , time_taken
+        suggested_tags, suggested_tag_ids = self.recommended_tags(tag_name,vertices_df,edges_df,community_df)
+        return suggested_tags , time_taken ,suggested_tag_ids
