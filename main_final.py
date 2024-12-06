@@ -16,6 +16,9 @@ import pandas as pd
 from itertools import combinations
 from tqdm import tqdm
 from graphframes import GraphFrame
+import community as community_louvain
+from networkx.algorithms.community import label_propagation_communities
+import networkx as nx
 
 def build_dataset(spark_session):
     # Build the required dataframes (running locally)
@@ -41,14 +44,37 @@ def build_dataset(spark_session):
 def preprocess_text(post_text_df_raw):
     return TextPreprocessor(post_text_df_raw).preprocess_text()
 
-def run_community_detection(vertices,edges):
-    graph = GraphFrame(vertices, edges)
-    result = graph.connectedComponents()
-    # result.show(20)
-    print('Number of communities',result.select("component").distinct().count())
-    result = graph.labelPropagation(maxIter=5)
-    result.show(20)   
-    print('Number of communities', result.select("label").distinct().count())
+def run_community_detection(vertices,edges,py=True):
+    if py==True:
+        python_graph = nx.Graph()
+        vertices_pd = vertices.toPandas()
+        edges_pd = edges.toPandas()
+        print(vertices_pd.columns)
+        for _, row in vertices_pd.iterrows():
+            if 'attribute' in row:
+                python_graph.add_node(row['id'], attribute=row['attribute'])
+            else:
+                python_graph.add_node(row['id'])  # Handle case without 'attribute'
+    
+        for _, row in edges_pd.iterrows():
+            python_graph.add_edge(row['src'], row['dst'], weight=row['weight'])
+    
+        print("Inside NetworkX Creation")
+        communities = label_propagation_communities(python_graph)
+        node_labels = {node: idx for idx, community in enumerate(communities) for node in community}
+        result = pd.DataFrame(list(node_labels.items()), columns=["id", "label"])
+        print(result)
+        distinct_count = result['label'].nunique()
+        print(f"Number of distinct communities: {distinct_count}")
+    else:
+        graph = GraphFrame(vertices, edges)
+        result = graph.connectedComponents()
+        print('Number of communities',result.select("component").distinct().count())
+        result = graph.labelPropagation(maxIter=5)
+        result.show(20)   
+        print('Number of communities', result.select("label").distinct().count())
+
+    print('After NetworkX Creation')
     return result
 
 def get_graph_vertices_edges(TFIDF_vectors_path,tag_count):
@@ -221,7 +247,7 @@ if __name__ == "__main__":
         print(len(edges))
         vertices_df = spark_session.createDataFrame(vertices,["id","name"])
         edges_df = spark_session.createDataFrame(edges,["src", "dst", "weight"])
-        community_df = run_community_detection(vertices_df,edges_df)
+        community_df = run_community_detection(vertices_df,edges_df,False)
         suggested_tags = inference_graph('android-xml',vertices_df,edges_df,community_df)
         print(suggested_tags)
     except():

@@ -15,7 +15,7 @@ Local Setup
 2. Install necessary Python libraries using:
 ```conda env create -f environment.yml```
 3. Run master.py locally:
-```python master.py ```
+```python master.py --tag_name '{tag name for recommendation}'``` (Pass the appropriate tag to get the recommendations)
 
 
 ## Code Files Description
@@ -131,6 +131,7 @@ The preprocessing steps are implemented using Python, with the following librari
 - NLTK: For natural language processing tasks such as tokenization and stop words removal.
 - Scikit-learn: For implementing TF-IDF vectorization.
 - PySpark: Utilized for handling large datasets and performing operations in a distributed system environment, particularly useful when processing the full StackOverflow dataset.
+- GraphFrames: Utilized for handling large scale graphs and performing operations (such as community detection, etc) in a distributed system environment, particularly useful when processing the full StackOverflow dataset.
 
 ## Execution
 To execute the preprocessing steps, run the master.py script, which coordinates the workflow and calls other scripts/modules like TextPreprocessor.py and TFIDF.py to process the data accordingly. Ensure all dependencies are installed, and appropriate configurations are set up for PySpark to handle large-scale data effectively.
@@ -141,13 +142,13 @@ To execute the preprocessing steps, run the master.py script, which coordinates 
 
 
 ## Model Testing
-
+- **Recommendation:** Given a tag, we locate the target community in the graph and suggest relevant tags based on that community nodes.
+- Precision@5 for recommended tags - **0.51**
+- Here are few examples:
+![Local Image](/images/Evaluation.jpg "Evaluation Example")
 
 ## Contributing
 Contributions to this project are welcome. Please fork the repository, make your changes, and submit a pull request for review.
-
-## License
-This project is licensed under the MIT License.
 
 ## Contact
 For bugs, features, or questions about the project, please file an issue in the GitHub repository or contact the project maintainers directly.
