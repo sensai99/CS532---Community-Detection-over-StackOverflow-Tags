@@ -145,6 +145,7 @@ To execute the preprocessing steps, run the master.py script, which coordinates 
 - **Recommendation:** Given a tag, we locate the target community in the graph and suggest relevant tags based on that community nodes.
 - Precision@5 for recommended tags - **0.51**
 - Here are few examples:
+![Local Image](/images/Evaluation.jpg "Evaluation Example")
 
 ## Contributing
 Contributions to this project are welcome. Please fork the repository, make your changes, and submit a pull request for review.
