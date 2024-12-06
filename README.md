@@ -93,14 +93,48 @@ The preprocessing pipeline transforms raw data from StackOverflow into a clean, 
 
 - TF-IDF Vectorization (TFIDF.py): The Term Frequency-Inverse Document Frequency (TF-IDF) technique is used to convert text data into a numeric form. TF-IDF highlights words that are more interesting, i.e., frequent in a particular document but rare across documents, which helps in distinguishing tags based on their unique descriptions.
 
-4. Dimensionality Reduction:
-
-- Feature Selection: Techniques such as feature importance scores may be applied to reduce the number of features (words) in the dataset, focusing on those that offer the most information for clustering tags.
-- Principal Component Analysis (PCA): In scenarios where dimensionality reduction is necessary to enhance computational efficiency, PCA can be employed to condense the feature set while retaining most of the variance in the data.
-
-5. Data Integration:
+4. Data Integration:
 
 - Tag Co-occurrence Analysis: A matrix capturing the co-occurrence frequencies of tags in the same posts is created. This matrix serves as the basis for defining relationships (edges) between tags (nodes) in the community detection algorithms.
+
+## Community Detection Algorithm
+
+# Overview
+In this project, we utilize the Label Propagation Algorithm (LPA) to detect communities within the StackOverflow tags network.
+
+# Algorithm Description
+The Label Propagation Algorithm operates based on the idea of spreading labels throughout the network and forming communities based on this label propagation process. Each node in the network starts with a unique label, and at every iteration, each node adopts the label that most of its neighbors currently have. This iterative process continues until convergence, typically when each node has the label that most of its neighbors have or when a maximum number of iterations is reached.
+
+# Steps of the Label Propagation Algorithm
+1. Initialization:
+
+- Assign a unique label to each node in the graph (in this case, each StackOverflow tag is treated as a node).
+
+2. Propagation:
+
+- For each node, update its label to the one that the majority of its neighbors have. Ties can be broken uniformly at random.
+
+3. Termination:
+
+- Repeat the propagation step until no labels change or a predefined number of iterations is reached. This ensures that the algorithm terminates even if a perfect consensus isn't reached. For our experiments, we kept 20 iterations. 
+
+# Advantages
+- Scalability: LPA can handle large graphs efficiently because it requires only local information and has lower computational complexity.
+- Simplicity: The algorithm does not require any prior information about the number or sizes of communities.
+- Flexibility: It can be easily adapted or combined with other techniques to improve its effectiveness or to incorporate additional information.
+
+# Implementation Details
+The implementation of LPA in this project is done using PySpark to leverage distributed computing, allowing the algorithm to scale with the size of the dataset. We utilize the GraphFrames library in PySpark, which provides a scalable API for graph operations including the label propagation method.
+
+
+# Challenges and Considerations
+- Convergence: One of the challenges with LPA is ensuring that it converges, as it can oscillate in some cases. Implementing a maximum number of iterations helps mitigate this.
+- Resolution: LPA may not always resolve fine-grained community structures, particularly in cases of overlapping communities or closely interconnected nodes.
+- Post-Processing: After label propagation, some post-processing might be required to merge or split communities based on additional criteria or domain-specific knowledge.
+
+# Conclusion
+By employing the Label Propagation Algorithm, we aim to efficiently uncover the inherent community structure within StackOverflow tags, enhancing content discoverability and providing insights into the collaborative dynamics of the StackOverflow community.
+
 
 ## Tools and Libraries
 The preprocessing steps are implemented using Python, with the following libraries:
