@@ -60,6 +60,7 @@ class CommunityDetection:
             .withColumnRenamed("tag_name", "name")
 
     def perform_community_detection_networkx(self, vertices_df, edges_df, training_iterations):
+        # Perfoms community detection using the NetworkX Louvain method
         G = nx.Graph()
         print("Inside perform_community_detection_networkx")
         for row in edges_df.collect():
