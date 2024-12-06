@@ -10,15 +10,16 @@ import json
 
 class TF_IDF:
     def __init__(self,session):
-        self.spark_session = session
+        self.spark_session = session  # Initialize a Spark session for data processing
         
     def build_dataset(self):
-        dataset = Dataset(self.spark_session, is_local = True)
-        tag_post_df = dataset.build_tag_post_df()
-        post_text_df_raw = dataset.build_post_text_df()
+        dataset = Dataset(self.spark_session, is_local = True)  # Create an instance of Dataset
+        tag_post_df = dataset.build_tag_post_df()  # Build a DataFrame mapping tags to posts
+        post_text_df_raw = dataset.build_post_text_df()  # Build a DataFrame of raw post texts
         return tag_post_df, post_text_df_raw
 
     def preprocess_text(self,post_text_df_raw):
+        # Process the raw post text DataFrame using the TextPreprocessor
         return TextPreprocessor(post_text_df_raw).preprocess_text()
     
     def prepare_TFIDF_vectors(self,vector_save_path = "datasets/vectors.npz",tag_save_path="datasets/tag_id_name.json",feature_size=1000):
@@ -40,9 +41,11 @@ class TF_IDF:
             (trim(col("body")).isNotNull()) & (trim(col("body")) != "")
         )
 
+        # Convert DataFrames to pandas for easier manipulation
         tag_post_df_pandas = tag_post_df.toPandas()
         post_text_df_pandas = post_text_df.toPandas()
 
+        # Prepare lists for tags and posts information
         tag_ids = []
         tag_names = []
         tag_post_ids = []
@@ -58,7 +61,7 @@ class TF_IDF:
             body_texts.append(row['body'])
             post_ids.append(row['post_id'])
 
-   
+         # Create a mapping of tag names to tag IDs and save it to a JSON file
         tag_name_map = [{'tag_name':tag_name,'tag_id':str(tag_id)} for tag_id,tag_name in zip(tag_ids,tag_names)]
         with open(tag_save_path, 'w') as file:
             json.dump(tag_name_map,file)
@@ -82,7 +85,7 @@ class TF_IDF:
             tag_posts_vectors = []
             for post_id in tag_posts:
                 if post_id in post_ids: tag_posts_vectors.append(post_id_vector_map[post_id])
-            
+            # Compute the mean of vectors for posts associated with each tag
             tag_vector_map[str(tag_id)] = np.mean(np.array(tag_posts_vectors),axis=0) if len(tag_posts_vectors)>0 else np.zeros(feature_size)
 
         if vector_save_path: np.savez(vector_save_path, **tag_vector_map)
