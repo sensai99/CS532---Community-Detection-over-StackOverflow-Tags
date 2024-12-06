@@ -17,7 +17,7 @@ def main(tag_name):
     # Perform community detection for the specified tag_name and print results
     time = Community_Detection.community_detection(1000)
     recommended_tags, recommended_tag_ids = Community_Detection.recommend_tags(tag_name)
-    print(recommended_tags)
+    print('recommended tags - ',recommended_tags)
 
     #precision = evaluate(Community_Detection)    
     # Stop the Spark session to free up resources

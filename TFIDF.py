@@ -22,28 +22,33 @@ class TF_IDF:
         # Process the raw post text DataFrame using the TextPreprocessor
         return TextPreprocessor(post_text_df_raw).preprocess_text()
     
-    def prepare_TFIDF_vectors(self,vector_save_path = "datasets/vectors.npz",tag_save_path="datasets/tag_id_name.json",feature_size=1000):
+    def prepare_TFIDF_vectors(self,vector_save_path = "datasets/vectors.npz",tag_save_path="datasets/tag_id_name.json",feature_size=1000,from_bigquery=False):
 
-        # Build the dataset
-        tag_post_df, post_text_df_raw = self.build_dataset()
+        # # Build the dataset
 
-        # preprocess tag data
-        tag_post_df = tag_post_df.withColumn(
-        "post_ids_array",
-        F.split(F.col("post_ids"), ",").cast("array<string>")
-        ).drop('post_ids')
+        if from_bigquery:
+            tag_post_df, post_text_df_raw = self.build_dataset()
 
-        # Preprocess the post text data 
-        post_text_df = self.preprocess_text(post_text_df_raw)
-        post_text_df = post_text_df.filter(post_text_df["score"] >= 1)
-        post_text_df = post_text_df.filter(
-            (trim(col("title")).isNotNull()) & (trim(col("title")) != "") & 
-            (trim(col("body")).isNotNull()) & (trim(col("body")) != "")
-        )
+            # preprocess tag data
+            tag_post_df = tag_post_df.withColumn(
+            "post_ids_array",
+            F.split(F.col("post_ids"), ",").cast("array<string>")
+            ).drop('post_ids')
 
-        # Convert DataFrames to pandas for easier manipulation
-        tag_post_df_pandas = tag_post_df.toPandas()
-        post_text_df_pandas = post_text_df.toPandas()
+            # Preprocess the post text data 
+            post_text_df = self.preprocess_text(post_text_df_raw)
+            post_text_df = post_text_df.filter(post_text_df["score"] >= 1)
+            post_text_df = post_text_df.filter(
+                (trim(col("title")).isNotNull()) & (trim(col("title")) != "") & 
+                (trim(col("body")).isNotNull()) & (trim(col("body")) != "")
+            )
+
+            # Convert DataFrames to pandas for easier manipulation
+            tag_post_df_pandas = tag_post_df.toPandas()
+            post_text_df_pandas = post_text_df.toPandas()
+        else:
+            post_text_df_pandas = pd.read_csv('datasets/post_text_data.csv')
+            tag_post_df_pandas = pd.read_csv('datasets/tag_post_data.csv')
 
         # Prepare lists for tags and posts information
         tag_ids = []
