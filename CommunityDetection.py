@@ -8,6 +8,9 @@ import numpy as np
 import json
 import time
 from utils import cosine_similarity
+import community as community_louvain
+from networkx.algorithms.community import label_propagation_communities
+import networkx as nx
 
 class CommunityDetection:
     def __init__(self,spark_session,tag_data_path = "datasets/tag_id_name.json",TFIDF_vector_path="datasets/vectors.npz"):
@@ -56,6 +59,19 @@ class CommunityDetection:
             .withColumnRenamed("tag_id", "id") \
             .withColumnRenamed("tag_name", "name")
 
+    def perform_community_detection_networkx(self, vertices_df, edges_df, training_iterations):
+        G = nx.Graph()
+        print("Inside perform_community_detection_networkx")
+        for row in edges_df.collect():
+            G.add_edge(row['src'], row['dst'], weight=row['weight'])
+
+        partition = community_louvain.best_partition(G)
+        community_df = pd.DataFrame(list(partition.items()), columns=['node', 'community'])
+        
+        time_taken = training_iterations  # Or compute time using `time` module if needed
+
+        return community_df, time_taken
+    
     def perform_community_detection(self,graph,training_iterations):
         # Performs community detection using the label propagation algorithm and measures execution time
         start_time = time.time()
@@ -63,7 +79,7 @@ class CommunityDetection:
         end_time = time.time()
         return connected_components, end_time - start_time   
 
-    def community_detection(self,tag_count=20,similarity_threshold=0.5,training_iterations=5):
+    def community_detection(self,tag_count=20,similarity_threshold=0.5,training_iterations=5,py=False):
         # The main method orchestrating the community detection process and recommending tags
         tag_df = self.load_tag_data()
         tfidf_df = self.load_tfidf_data(tag_count)
@@ -74,6 +90,9 @@ class CommunityDetection:
 
         graph = GraphFrame(self.vertices_df, self.edges_df)
         community_df,time_taken = self.perform_community_detection(graph,training_iterations)
+        if py :
+            print("Inside NetworkX")
+            community_df, time_taken = self.perform_community_detection_networkx(vertices_df, edges_df, training_iterations)
         self.community_df = community_df
         return time_taken
     
