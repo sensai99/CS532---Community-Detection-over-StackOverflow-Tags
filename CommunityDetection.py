@@ -61,15 +61,33 @@ class CommunityDetection:
         start_time = time.time()
         connected_components = graph.labelPropagation(maxIter=training_iterations)
         end_time = time.time()
-        return connected_components, end_time - start_time
-    
-    def recommended_tags(self,tag_name, vertices_df,edges_df,community_df):
-        # Recommends tags from the same community as the input tag, based on highest weights
-        tag_id = vertices_df.filter(vertices_df.name == tag_name).first()['id']
-        community_id = community_df.filter(community_df.id == tag_id).first()['label']
-        community_df = community_df.filter(community_df.label == community_id)
+        return connected_components, end_time - start_time   
 
-        tag_id_edges = edges_df.filter((edges_df.src == tag_id) | (edges_df.dst == tag_id))
+    def community_detection(self,tag_count=20,similarity_threshold=0.5,training_iterations=5):
+        # The main method orchestrating the community detection process and recommending tags
+        tag_df = self.load_tag_data()
+        tfidf_df = self.load_tfidf_data(tag_count)
+
+        similarity_df = self.create_similarity_df(tfidf_df,similarity_threshold)
+        self.edges_df = self.create_edges_df(similarity_df)
+        self.vertices_df = self.create_vertices_df(broadcast(tag_df), tfidf_df)
+
+        graph = GraphFrame(self.vertices_df, self.edges_df)
+        community_df,time_taken = self.perform_community_detection(graph,training_iterations)
+        self.community_df = community_df
+        return time_taken
+    
+        
+    def recommend_tags(self,tag_name):
+        # Recommends tags from the same community as the input tag, based on highest weights
+        try:
+            tag_id = self.vertices_df.filter(self.vertices_df.name == tag_name).first()['id']
+        except:
+            return [],[]
+        community_id = self.community_df.filter(self.community_df.id == tag_id).first()['label']
+        community_df = self.community_df.filter(self.community_df.label == community_id)
+
+        tag_id_edges = self.edges_df.filter((self.edges_df.src == tag_id) | (self.edges_df.dst == tag_id))
         target_vertex = udf(lambda src, dest: src if str(dest)==str(tag_id) else dest, StringType())
         tag_id_edges = tag_id_edges.withColumn('id',target_vertex(tag_id_edges.src,tag_id_edges.dst))
 
@@ -78,19 +96,4 @@ class CommunityDetection:
         search_space_df.show()
         suggested_tag_rows = search_space_df.head(10)
         
-        return [row["name"] for row in suggested_tag_rows],[row["id"] for row in suggested_tag_rows]     
-
-    def community_detection(self,tag_name,tag_count=20,similarity_threshold=0.5,training_iterations=5):
-        # The main method orchestrating the community detection process and recommending tags
-        tag_df = self.load_tag_data()
-        tfidf_df = self.load_tfidf_data(tag_count)
-
-        similarity_df = self.create_similarity_df(tfidf_df,similarity_threshold)
-        edges_df = self.create_edges_df(similarity_df)
-        vertices_df = self.create_vertices_df(broadcast(tag_df), tfidf_df)
-
-        graph = GraphFrame(vertices_df, edges_df)
-        community_df,time_taken = self.perform_community_detection(graph,training_iterations)
-
-        suggested_tags, suggested_tag_ids = self.recommended_tags(tag_name,vertices_df,edges_df,community_df)
-        return suggested_tags , time_taken ,suggested_tag_ids
+        return [row["name"] for row in suggested_tag_rows],[row["id"] for row in suggested_tag_rows]  
