@@ -11,15 +11,18 @@ from utils import cosine_similarity
 
 class CommunityDetection:
     def __init__(self,spark_session,tag_data_path = "datasets/tag_id_name.json",TFIDF_vector_path="datasets/vectors.npz"):
+        # Constructor initializing the Spark session and paths for tag data and TFIDF vectors
         self.spark_session = spark_session
         self.tag_data_path = tag_data_path
         self.TFIDF_vector_path = TFIDF_vector_path
 
     def load_tag_data(self):
+        # Loads the JSON tag data into a pandas DataFrame and converts it into a Spark DataFrame
         tag_df = pd.read_json(self.tag_data_path)
         return self.spark_session.createDataFrame(tag_df).withColumnRenamed("id", "tag_id").withColumnRenamed("name", "tag_name")
 
     def load_tfidf_data(self,tag_count):
+        # Loads the TFIDF vector data and converts it into a Spark DataFrame with specified schema
         npz_data = np.load(self.TFIDF_vector_path, allow_pickle=True)
         ids = list(npz_data.keys())[:tag_count]
         vectors = list(npz_data.values())[:tag_count]
@@ -31,6 +34,7 @@ class CommunityDetection:
         return self.spark_session.createDataFrame(zip(ids, vectors), schema=schema)
 
     def create_similarity_df(self,tfidf_df,similarity_threshold):
+        # Calculates cosine similarity between pairs of tags above a given threshold
         cosine_similarity_udf = udf(cosine_similarity, FloatType())
         return tfidf_df.alias("a") \
             .join(tfidf_df.alias("b"), col("a.tag_id") < col("b.tag_id")) \
@@ -38,6 +42,7 @@ class CommunityDetection:
             .filter(col("cosine_similarity") > similarity_threshold)
     
     def create_edges_df(self,similarity_df):
+        # Creates an edges DataFrame for the graph with source, destination, and weight columns
         return similarity_df.select(
             col("a.tag_id").alias("src"),
             col("b.tag_id").alias("dst"),
@@ -45,18 +50,21 @@ class CommunityDetection:
         )
 
     def create_vertices_df(self,tag_df, tfidf_df):
+        # Creates vertices DataFrame for the graph, combining tag data with TFIDF vectors
         return tag_df.join(tfidf_df, on="tag_id") \
             .select("tag_id", "tag_name") \
             .withColumnRenamed("tag_id", "id") \
             .withColumnRenamed("tag_name", "name")
 
     def perform_community_detection(self,graph,training_iterations):
+        # Performs community detection using the label propagation algorithm and measures execution time
         start_time = time.time()
         connected_components = graph.labelPropagation(maxIter=training_iterations)
         end_time = time.time()
         return connected_components, end_time - start_time
     
     def recommended_tags(self,tag_name, vertices_df,edges_df,community_df):
+        # Recommends tags from the same community as the input tag, based on highest weights
         tag_id = vertices_df.filter(vertices_df.name == tag_name).first()['id']
         community_id = community_df.filter(community_df.id == tag_id).first()['label']
         community_df = community_df.filter(community_df.label == community_id)
@@ -73,6 +81,7 @@ class CommunityDetection:
         return [row["name"] for row in suggested_tag_rows]
 
     def community_detection(self,tag_name,tag_count=20,similarity_threshold=0.5,training_iterations=5):
+        # The main method orchestrating the community detection process and recommending tags
         tag_df = self.load_tag_data()
         tfidf_df = self.load_tfidf_data(tag_count)
 

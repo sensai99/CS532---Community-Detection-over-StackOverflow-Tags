@@ -2,9 +2,9 @@ from pyspark.sql.functions import explode, split, collect_list, concat_ws, lit
 
 class Dataset:
     def __init__(self, spark_session, is_local = True, limit = None):
-        self.spark_session = spark_session
-        self.limit = limit
-        self.is_local = is_local
+        self.spark_session = spark_session  # Spark session for data processing
+        self.limit = limit   # Optional limit for data processing to restrict data size
+        self.is_local = is_local  # Boolean flag to determine the data source (local or BigQuery)
 
         # Data files
         self.stackoverflow_posts_df = None
@@ -12,8 +12,8 @@ class Dataset:
         self.posts_tag_wiki_excerpt_df = None
         self.posts_tag_wiki_df = None
 
-        self.read_big_query_tables()
-        self.clean_dfs()
+        self.read_big_query_tables()  # Method call to read data tables
+        self.clean_dfs()  # Method call to clean dataframes
         return
 
     # Read all the data sources
@@ -31,6 +31,7 @@ class Dataset:
             self.posts_tag_wiki_excerpt_df = self.spark_session.read.format("bigquery").option("table", "bigquery-public-data.stackoverflow.posts_tag_wiki_excerpt").load()
             self.posts_tag_wiki_df = self.spark_session.read.format("bigquery").option("table", "bigquery-public-data.stackoverflow.posts_tag_wiki").load()
         
+        # Optionally limit the number of records processed
         if self.limit != None:
             self.stackoverflow_posts_df = self.stackoverflow_posts_df.select("id", "title", "body", "tags", "parent_id", "score").limit(self.limit)
             self.tags_df = self.tags_df.limit(self.limit)
@@ -44,7 +45,7 @@ class Dataset:
         return
     
     def clean_dfs(self):
-        # TODO: This might remove the entries for excerpt and wiki?
+        # Filter out posts that do not have any tags
         self.stackoverflow_posts_df = self.stackoverflow_posts_df.filter(self.stackoverflow_posts_df.tags != '')
         
         return

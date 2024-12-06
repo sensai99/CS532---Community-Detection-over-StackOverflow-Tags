@@ -23,6 +23,7 @@ stop_words = set(stopwords.words('english'))
 
 # Define the UDF function outside the class
 def clean_text(text):
+    # Calls various static methods from the TextPreprocessor class to clean and process text
     text = TextPreprocessor.remove_html_tags(text)
     text = TextPreprocessor.tokenize_text(text)
     text = TextPreprocessor.normalize_text(text)
@@ -37,7 +38,7 @@ clean_text_udf = udf(clean_text, StringType())
 
 class TextPreprocessor:
     def __init__(self, text_df):
-        self.text_df = text_df
+        self.text_df = text_df  # DataFrame containing text to be processed
         return
 
     # Remove HTML tags
@@ -45,7 +46,7 @@ class TextPreprocessor:
     def remove_html_tags(text):
         filtered_html_text = ""
         try:
-            filtered_html_text = BeautifulSoup(text, "html.parser").get_text()
+            filtered_html_text = BeautifulSoup(text, "html.parser").get_text()  # Convert HTML to plain text
         except:
             filtered_html_text = ""
         return filtered_html_text
