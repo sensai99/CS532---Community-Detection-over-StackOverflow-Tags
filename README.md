@@ -9,6 +9,25 @@ The insights generated through this community detection can significantly improv
 
 Utilizing PySpark for data processing and Google Dataproc for scalable cloud deployment, this project leverages both to handle the large scale of data with efficiency. The resulting system not only enhances the user experience on StackOverflow but also contributes to the broader field of knowledge management in educational and professional tech communities.
 
+## Environment Setup and Execution
+Local Setup
+1. Ensure Python and PySpark are installed on your local machine.
+2. Install necessary Python libraries using:
+```conda env create -f environment.yml```
+3. Run master.py locally:
+```python master.py ```
+
+
+## Code Files Description
+This project consists of several Python scripts and utility modules:
+- `CommunityDetection.py`: Implements the core functionality for detecting communities using GraphFrames on Spark. It includes methods for loading data, creating similarity graphs, and performing community detection.
+- `Dataproc_helper_utils.py`: Contains utility functions for interacting with Google Cloud Storage and managing data within Google Dataproc.
+- `Dataset.py`:  Manages data loading and preprocessing, interfacing with both local data sources and BigQuery depending on the configuration.
+- `master.py`: The entry point script that sets up the Spark session, initializes the process, and handles the execution of community detection.
+- `TextPreprocessor.py`: Provides text cleaning and preprocessing functionalities to prepare text data for further analysis.
+- `TFIDF.py`: Manages the creation and manipulation of TF-IDF vectors from text data to quantify tag similarity.
+- `utils.py`: Includes helper functions such as cosine similarity calculations.
+
 
 ## Dataset references
 - [Kaggle dataset link](https://www.kaggle.com/datasets/stackoverflow/stackoverflow/data?select=tags)
@@ -49,27 +68,6 @@ Data preprocessing is performed using ```TextPreprocessor.py```, which cleans an
 
 The cleaned and structured data is then processed using PySpark to leverage distributed computing for handling the dataset's volume and complexity efficiently.
 
-
-## Environment Setup and Execution
-Local Setup
-1. Ensure Python and PySpark are installed on your local machine.
-2. Install necessary Python libraries using:
-```conda env create -f environment.yml```
-3. Run master.py locally:
-```python master.py ```
-
-
-## Code Files Description
-This project consists of several Python scripts and utility modules:
-- `CommunityDetection.py`: Implements the core functionality for detecting communities using GraphFrames on Spark. It includes methods for loading data, creating similarity graphs, and performing community detection.
-- `Dataproc_helper_utils.py`: Contains utility functions for interacting with Google Cloud Storage and managing data within Google Dataproc.
-- `Dataset.py`:  Manages data loading and preprocessing, interfacing with both local data sources and BigQuery depending on the configuration.
-- `master.py`: The entry point script that sets up the Spark session, initializes the process, and handles the execution of community detection.
-- `TextPreprocessor.py`: Provides text cleaning and preprocessing functionalities to prepare text data for further analysis.
-- `TFIDF.py`: Manages the creation and manipulation of TF-IDF vectors from text data to quantify tag similarity.
-- `utils.py`: Includes helper functions such as cosine similarity calculations.
-
-
 ## Data Preprocessing
 
 Effective data preprocessing is crucial for ensuring the accuracy and efficiency of community detection in StackOverflow tags. This section describes the sequence of preprocessing steps applied to the dataset to optimize it for clustering analysis.
@@ -95,12 +93,12 @@ The preprocessing pipeline transforms raw data from StackOverflow into a clean, 
 
 4. Data Integration:
 
-- Tag Co-occurrence Analysis: A matrix capturing the co-occurrence frequencies of tags in the same posts is created. This matrix serves as the basis for defining relationships (edges) between tags (nodes) in the community detection algorithms.
+- Tag Co-occurrence Analysis: A matrix capturing the semantic closeness between tags is created based on the TF-IDF vectors. This matrix serves as the basis for defining relationships (edges) between tags (nodes) in the community detection algorithms.
 
-## Community Detection Algorithm
+## Graph Construction and Community Detection
 
 # Overview
-In this project, we utilize the Label Propagation Algorithm (LPA) to detect communities within the StackOverflow tags network.
+In this project, we build a tag correlation graph where each tag represents a node and the edge between tags is weighted with the cosine similarity of the constituent nodes. We utilize the Label Propagation Algorithm (LPA) to detect communities within the StackOverflow tags network. This enables us to perform quick recommendation for a particular tag and avoids search over entire tag space.
 
 # Algorithm Description
 The Label Propagation Algorithm operates based on the idea of spreading labels throughout the network and forming communities based on this label propagation process. Each node in the network starts with a unique label, and at every iteration, each node adopts the label that most of its neighbors currently have. This iterative process continues until convergence, typically when each node has the label that most of its neighbors have or when a maximum number of iterations is reached.
@@ -112,7 +110,7 @@ The Label Propagation Algorithm operates based on the idea of spreading labels t
 
 2. Propagation:
 
-- For each node, update its label to the one that the majority of its neighbors have. Ties can be broken uniformly at random.
+- For each node, update its label to the one that the majority of its neighbors have (Here the popular label is decided based on the edge weights) . Ties can be broken uniformly at random.
 
 3. Termination:
 
@@ -124,7 +122,7 @@ The Label Propagation Algorithm operates based on the idea of spreading labels t
 - Flexibility: It can be easily adapted or combined with other techniques to improve its effectiveness or to incorporate additional information.
 
 # Implementation Details
-The implementation of LPA in this project is done using PySpark to leverage distributed computing, allowing the algorithm to scale with the size of the dataset. We utilize the GraphFrames library in PySpark, which provides a scalable API for graph operations including the label propagation method.
+The implementation of LPA in this project is done using PySpark to leverage distributed computing, allowing the algorithm to scale with the size of the dataset. We utilize the GraphFrames library in PySpark, which provides a scalable API for graph operations including the label propagation method. We ran our community detection experiments on Dataproc with multiple clusters to execute graph algorithms at scale with computation time.
 
 
 # Challenges and Considerations
@@ -141,7 +139,7 @@ The preprocessing steps are implemented using Python, with the following librari
 
 - Pandas: For data manipulation and analysis.
 - NLTK: For natural language processing tasks such as tokenization and stop words removal.
-- Scikit-learn: For implementing TF-IDF vectorization and PCA.
+- Scikit-learn: For implementing TF-IDF vectorization.
 - PySpark: Utilized for handling large datasets and performing operations in a distributed system environment, particularly useful when processing the full StackOverflow dataset.
 
 ## Execution
