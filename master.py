@@ -1,6 +1,7 @@
 import argparse
 from CommunityDetection import CommunityDetection
 from TFIDF import TF_IDF
+from Testing import evaluate
 from pyspark.sql import SparkSession
 
 def main(tag_name):
@@ -16,6 +17,8 @@ def main(tag_name):
     # Perform community detection for the specified tag_name and print results
     recommended_tags,time = Community_Detection.community_detection(tag_name)
     print(recommended_tags)
+
+    evaluate(Community_Detection)    
     # Stop the Spark session to free up resources
     spark_session.stop()
     
