@@ -37,7 +37,7 @@ This project consists of several Python scripts and utility modules:
 ## Dataset Overview
 This project utilizes a comprehensive dataset sourced from StackOverflow, a prominent platform for developers and IT professionals seeking to share knowledge and solve programming challenges. The dataset is critical for developing our community detection system, as it contains extensive information about tags used across millions of questions.
 
-# Sources
+### Sources
 1. StackOverflow Tags Dataset from Kaggle:
 
 - Description: This dataset comprises a wide array of tags that users have applied to questions over the years. It includes details about each tag's usage frequency and associations with various technology stacks.
@@ -47,35 +47,26 @@ This project utilizes a comprehensive dataset sourced from StackOverflow, a prom
 - Description: For real-time and updated data, we utilize the StackExchange Data Explorer, which allows us to run queries against the current state of the StackOverflow database. This helps in analyzing trends and changes in tag usage over time.
 - Access: Queries can be executed and customized via the StackExchange Data Explorer interface. This platform provides a flexible approach to data extraction based on specific needs and analysis goals.
 
-# Data Structure
+### Data Structure
 - Tags: Primary data element used for clustering. Each tag is associated with multiple questions, providing a rich source of contextual information.
 - Tag Descriptions: Brief descriptions of what each tag represents, aiding in understanding the context and usage of the tag within the community.
 - Usage Frequency: Each tag's occurrence frequency across the dataset, which helps in weighting tags in the clustering algorithms.
 
-# Data Usage
+### Data Usage
 The data is primarily used to:
 
 - Construct a graph where tags represent nodes connected based on their co-occurrence in questions, weighted by their similarity derived from textual descriptions.
 - Apply machine learning techniques to detect communities or clusters of closely related tags, enhancing the system's ability to recommend the most relevant tags to users.
 - Analyze tag usage patterns to monitor the evolution of programming trends and community preferences over time.
 
-# Data Processing
-Data preprocessing is performed using ```TextPreprocessor.py```, which cleans and prepares the text data for further analysis, including:
-
-- Removing irrelevant characters and stopwords.
-- Normalizing text to lower case.
-- Generating TF-IDF vectors to quantify tag similarity.
-
-The cleaned and structured data is then processed using PySpark to leverage distributed computing for handling the dataset's volume and complexity efficiently.
-
 ## Data Preprocessing
 
 Effective data preprocessing is crucial for ensuring the accuracy and efficiency of community detection in StackOverflow tags. This section describes the sequence of preprocessing steps applied to the dataset to optimize it for clustering analysis.
 
-# Overview
+### Overview
 The preprocessing pipeline transforms raw data from StackOverflow into a clean, structured format suitable for machine learning tasks. This involves text cleaning, normalization, and vectorization to facilitate sophisticated similarity measurements between tags.
 
-# Steps
+### Steps
 1. Data Cleaning:
 
 - HTML Tag Removal: Any HTML tags embedded in the text descriptions are removed to ensure only textual content is analyzed.
@@ -97,13 +88,13 @@ The preprocessing pipeline transforms raw data from StackOverflow into a clean, 
 
 ## Graph Construction and Community Detection
 
-# Overview
+### Overview
 In this project, we build a tag correlation graph where each tag represents a node and the edge between tags is weighted with the cosine similarity of the constituent nodes. We utilize the Label Propagation Algorithm (LPA) to detect communities within the StackOverflow tags network. This enables us to perform quick recommendation for a particular tag and avoids search over entire tag space.
 
-# Algorithm Description
+### Algorithm Description
 The Label Propagation Algorithm operates based on the idea of spreading labels throughout the network and forming communities based on this label propagation process. Each node in the network starts with a unique label, and at every iteration, each node adopts the label that most of its neighbors currently have. This iterative process continues until convergence, typically when each node has the label that most of its neighbors have or when a maximum number of iterations is reached.
 
-# Steps of the Label Propagation Algorithm
+### Steps of the Label Propagation Algorithm
 1. Initialization:
 
 - Assign a unique label to each node in the graph (in this case, each StackOverflow tag is treated as a node).
@@ -116,28 +107,27 @@ The Label Propagation Algorithm operates based on the idea of spreading labels t
 
 - Repeat the propagation step until no labels change or a predefined number of iterations is reached. This ensures that the algorithm terminates even if a perfect consensus isn't reached. For our experiments, we kept 20 iterations. 
 
-# Advantages
+### Advantages
 - Scalability: LPA can handle large graphs efficiently because it requires only local information and has lower computational complexity.
 - Simplicity: The algorithm does not require any prior information about the number or sizes of communities.
 - Flexibility: It can be easily adapted or combined with other techniques to improve its effectiveness or to incorporate additional information.
 
-# Implementation Details
+### Implementation Details
 The implementation of LPA in this project is done using PySpark to leverage distributed computing, allowing the algorithm to scale with the size of the dataset. We utilize the GraphFrames library in PySpark, which provides a scalable API for graph operations including the label propagation method. We ran our community detection experiments on Dataproc with multiple clusters to execute graph algorithms at scale with computation time.
 
 
-# Challenges and Considerations
+### Challenges and Considerations
 - Convergence: One of the challenges with LPA is ensuring that it converges, as it can oscillate in some cases. Implementing a maximum number of iterations helps mitigate this.
 - Resolution: LPA may not always resolve fine-grained community structures, particularly in cases of overlapping communities or closely interconnected nodes.
 - Post-Processing: After label propagation, some post-processing might be required to merge or split communities based on additional criteria or domain-specific knowledge.
 
-# Conclusion
+## Conclusion
 By employing the Label Propagation Algorithm, we aim to efficiently uncover the inherent community structure within StackOverflow tags, enhancing content discoverability and providing insights into the collaborative dynamics of the StackOverflow community.
 
 
 ## Tools and Libraries
 The preprocessing steps are implemented using Python, with the following libraries:
 
-- Pandas: For data manipulation and analysis.
 - NLTK: For natural language processing tasks such as tokenization and stop words removal.
 - Scikit-learn: For implementing TF-IDF vectorization.
 - PySpark: Utilized for handling large datasets and performing operations in a distributed system environment, particularly useful when processing the full StackOverflow dataset.
